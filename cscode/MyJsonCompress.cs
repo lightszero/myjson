@@ -28,7 +28,7 @@ public class MyJsonBinary
             int slen = ReadIntSingle(stream);
             byte[] buf = new byte[slen];
             stream.Read(buf, 0, slen);
-            string str = System.Text.Encoding.UTF8.GetString(buf);
+            string str = System.Text.Encoding.UTF8.GetString(buf, 0, buf.Length);
             list.Add(str);
         }
         return list;
@@ -187,7 +187,7 @@ public class MyJsonBinary
         {
             byte[] buf = new byte[keylength];
             stream.Read(buf, 0, keylength);
-            return System.Text.Encoding.UTF8.GetString(buf);
+            return System.Text.Encoding.UTF8.GetString(buf, 0, buf.Length);
         }
 
     }
@@ -200,16 +200,17 @@ public class MyJsonBinary
     static void WriteIntData(System.IO.Stream stream, int number)
     {
         int bytelen = 1;
-        int c =number;
+        int sc = number;
         if (number < 0)
-            c *= -1;
+            sc *= -1;
+        int c = sc;
         while (c >= 0x100)
         {
             c /= 0x100;
             bytelen++;
         }
-        stream.WriteByte(MakeNumberTag(false, false, false,(number<0),bytelen));
-        byte[] buf = BitConverter.GetBytes(c);
+        stream.WriteByte(MakeNumberTag(false, false, false, (number < 0), bytelen));
+        byte[] buf = BitConverter.GetBytes(sc);
         stream.Write(buf, 0, bytelen);
     }
 
