@@ -291,9 +291,11 @@ class JsonPack
 	static function WriteIntData(&$binstr_writebuf,&$seek, $number)
     {
         $bytelen = 1;
-        $c = $number;
+       
+		$c  =$number;
 		if ($number < 0)
             $c *= -1;
+		$cc = $c;
         while ($c >= 0x100)
         {
             $c = floor($c/0x100);
@@ -302,7 +304,7 @@ class JsonPack
         $tag=JsonPack::MakeNumberTag(false, false, false, ($number < 0),$bytelen);
 		$binstr_writebuf.=pack("C",$tag);
 		$seek++;
-		JsonPack::WriteIntPiece($binstr_writebuf,$seek,$bytelen,$c);
+		JsonPack::WriteIntPiece($binstr_writebuf,$seek,$bytelen,$cc);
     }
 	static function WriteArrayCountHead(&$binstr_writebuf,&$seek, $arraycount)
     {
