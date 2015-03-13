@@ -70,7 +70,7 @@ class JsonPack
                     $h = ($t % 32);
                     $m = $bytearray[$seek];$seek++;
                     $l = $bytearray[$seek];$seek++;
-                    return h * 256 * 256 + m * 256 + l;
+                    return $h * 256 * 256 + $m * 256 + $l;
                 }
                 else
                 {
@@ -80,7 +80,7 @@ class JsonPack
             else
             {
 				$low =  $bytearray[$seek];$seek++;
-                return $t % 64 * 256 + low;
+                return $t % 64 * 256 + $low;
             }
         }
         else
