@@ -121,12 +121,14 @@ public class MyJson
 
         bool IsNull();
         String AsString();
-        IList<IJsonNode> AsList();
-        IDictionary<string, IJsonNode> asDict();
+        JsonNode_Array AsList();
+        JsonNode_Object AsDict();
 
         bool HaveDictItem(string key);
 
         int GetListCount();
+
+        IJsonNode Clone();
     }
 
     public class JsonNode_ValueNumber : IJsonNode
@@ -162,7 +164,7 @@ public class MyJson
         }
         public void SetNull()
         {
-            this.isNull=true;
+            this.isNull = true;
             this.isBool = false;
         }
         public void SetBool(bool v)
@@ -216,14 +218,15 @@ public class MyJson
         }
         public void Scan(MyJson.ScanObj scan)
         {
-            string number = "";
+           
+            StringBuilder sb = new StringBuilder();
             for (int i = scan.seed; i < scan.json.Length; i++)
             {
                 char c = scan.json[i];
                 if (c != ',' && c != ']' && c != '}' && c != ' ')
                 {
                     if (c != '\n')
-                        number += c;
+                        sb.Append(c);
                 }
                 else
                 {
@@ -231,18 +234,18 @@ public class MyJson
                     break;
                 }
             }
-
-            if (number.ToLower() == "true")
+            string number = sb.ToString().ToLower();
+            if (number == "true")
             {
                 value = 1;
                 isBool = true;
             }
-            else if (number.ToLower() == "false")
+            else if (number == "false")
             {
                 value = 0;
                 isBool = true;
             }
-            else if (number.ToLower() == "null")
+            else if (number == "null")
             {
                 value = 0;
                 isNull = true;
@@ -405,12 +408,12 @@ public class MyJson
             throw new NotImplementedException();
         }
 
-        public IList<IJsonNode> AsList()
+        public JsonNode_Array AsList()
         {
             throw new NotImplementedException();
         }
 
-        public IDictionary<string, IJsonNode> asDict()
+        public JsonNode_Object AsDict()
         {
             throw new NotImplementedException();
         }
@@ -424,6 +427,12 @@ public class MyJson
         public int GetListCount()
         {
             throw new NotImplementedException();
+        }
+        public IJsonNode Clone()
+        {
+            var num = new JsonNode_ValueNumber(this.value);
+            num.isBool = this.isBool;
+            return num;
         }
     }
     public class JsonNode_ValueString : IJsonNode
@@ -489,7 +498,8 @@ public class MyJson
         }
         public void Scan(MyJson.ScanObj scan)
         {
-            string _value = "";
+            StringBuilder sb = new StringBuilder();
+            //string _value = "";
             for (int i = scan.seed + 1; i < scan.json.Length; i++)
             {
                 char c = scan.json[i];
@@ -497,13 +507,13 @@ public class MyJson
                 {
                     i++;
                     c = scan.json[i];
-                    _value += c;
+                    sb.Append( c);
                 }
 
                 else if (c != '\"')
                 {
 
-                    _value += c;
+                    sb.Append(c);
                 }
 
                 else
@@ -512,7 +522,7 @@ public class MyJson
                     break;
                 }
             }
-            value = _value;
+            value = sb.ToString();
         }
 
         public static implicit operator string(JsonNode_ValueString m)
@@ -640,12 +650,12 @@ public class MyJson
             return value;
         }
 
-        public IList<IJsonNode> AsList()
+        public JsonNode_Array AsList()
         {
             throw new NotImplementedException();
         }
 
-        public IDictionary<string, IJsonNode> asDict()
+        public JsonNode_Object AsDict()
         {
             throw new NotImplementedException();
         }
@@ -659,6 +669,11 @@ public class MyJson
         public int GetListCount()
         {
             throw new NotImplementedException();
+        }
+        public IJsonNode Clone()
+        {
+            var num = new JsonNode_ValueString(this.value);
+            return num;
         }
     }
 
@@ -687,24 +702,31 @@ public class MyJson
         }
         public void ConvertToStringWithFormat(StringBuilder sb, int spacesub)
         {
-            //for (int _i = 0; _i < space; _i++)
-            //    sb.Append(' ');
-            sb.Append("[\n");
-            for (int i = 0; i < this.Count; i++)
-            {
                 for (int _i = 0; _i < spacesub; _i++)
                     sb.Append(' ');
+                sb.Append("[\n");
 
-                this[i].ConvertToStringWithFormat(sb, spacesub + 4);
-                if (i != this.Count - 1)
-                    sb.Append(',');
-                sb.Append('\n');
-            }
-            //for (int _i = 0; _i < space; _i++)
-            //    sb.Append(' ');
-            for (int _i = 0; _i < spacesub; _i++)
-                sb.Append(' ');
-            sb.Append(']');
+                for (int i = 0; i < this.Count; i++)
+                {
+                    if (this[i] is MyJson.JsonNode_Object || this[i] is MyJson.JsonNode_Array)
+                    {
+
+                    }
+                    else
+                    {
+                        for (int _i = 0; _i < spacesub; _i++)
+                            sb.Append(' ');
+                    }
+                    this[i].ConvertToStringWithFormat(sb, spacesub + 4);
+                    if (i != this.Count - 1)
+                        sb.Append(',');
+                    sb.Append('\n');
+                }
+                //for (int _i = 0; _i < space; _i++)
+                //    sb.Append(' ');
+                for (int _i = 0; _i < spacesub; _i++)
+                    sb.Append(' ');
+                sb.Append(']');
         }
         public void ConvertToStringPhp(StringBuilder sb)
         {
@@ -934,12 +956,12 @@ public class MyJson
             throw new NotImplementedException();
         }
 
-        public IList<IJsonNode> AsList()
+        public JsonNode_Array AsList()
         {
             return this;
         }
 
-        public IDictionary<string, IJsonNode> asDict()
+        public JsonNode_Object AsDict()
         {
             throw new NotImplementedException();
         }
@@ -953,6 +975,16 @@ public class MyJson
         public int GetListCount()
         {
             return this.Count;
+        }
+
+        public IJsonNode Clone()
+        {
+            var num = new JsonNode_Array();
+            foreach (var item in this)
+            {
+                num.Add(item.Clone());
+            }
+            return num;
         }
     }
     public class JsonNode_Object : Dictionary<string, IJsonNode>, IJsonNode
@@ -984,28 +1016,30 @@ public class MyJson
         }
         public void ConvertToStringWithFormat(StringBuilder sb, int spacesub)
         {
-            //for (int _i = 0; _i < space; _i++)
-            //    sb.Append(' ');
-            sb.Append("{\n");
-            int i = Count;
-            foreach (var item in this)
-            {
                 for (int _i = 0; _i < spacesub; _i++)
                     sb.Append(' ');
+                sb.Append("{\n");
+                int i = Count;
+                foreach (var item in this)
+                {
+                    for (int _i = 0; _i < spacesub + 4; _i++)
+                        sb.Append(' ');
 
-                sb.Append('\"');
-                sb.Append(item.Key);
-                sb.Append("\":");
-                item.Value.ConvertToStringWithFormat(sb, spacesub + 4);
-                i--;
-                if (i != 0) sb.Append(',');
-                sb.Append('\n');
-            }
-            //for (int _i = 0; _i < space; _i++)
-            //    sb.Append(' ');
-            for (int _i = 0; _i < spacesub; _i++)
-                sb.Append(' ');
-            sb.Append('}');
+                    sb.Append('\"');
+                    sb.Append(item.Key);
+                    sb.Append("\":");
+                    if (item.Value is MyJson.JsonNode_Array || item.Value is MyJson.JsonNode_Object)
+                        sb.Append('\n');
+                    item.Value.ConvertToStringWithFormat(sb, spacesub + 4);
+                    i--;
+                    if (i != 0) sb.Append(',');
+                    sb.Append('\n');
+                }
+                //for (int _i = 0; _i < space; _i++)
+                //    sb.Append(' ');
+                for (int _i = 0; _i < spacesub; _i++)
+                    sb.Append(' ');
+                sb.Append('}');
         }
         public void ConvertToStringPhp(StringBuilder sb)
         {
@@ -1072,7 +1106,7 @@ public class MyJson
 
         public void Scan(MyJson.ScanObj scan)
         {
-            string key = null;
+            StringBuilder key = null;
             int keystate = 0;//0 nokey 1scankey 2gotkey
             for (int i = scan.seed + 1; i < scan.json.Length; i++)
             {
@@ -1089,7 +1123,7 @@ public class MyJson
                     if (c == '\"')
                     {
                         keystate = 1;
-                        key = "";
+                        key = new StringBuilder();
                     }
                 }
                 else if (keystate == 1)
@@ -1102,7 +1136,7 @@ public class MyJson
                     }
                     else
                     {
-                        key += c;
+                        key.Append(c);
                     }
                 }
                 else
@@ -1113,7 +1147,7 @@ public class MyJson
                         scan.seed = i;
                         node.Scan(scan);
                         i = scan.seed - 1;
-                        this.Add(key, node);
+                        this.Add(key.ToString(), node);
                         keystate = 0;
                     }
                 }
@@ -1327,12 +1361,12 @@ public class MyJson
             throw new NotImplementedException();
         }
 
-        public IList<IJsonNode> AsList()
+        public JsonNode_Array AsList()
         {
             throw new NotImplementedException();
         }
 
-        public IDictionary<string, IJsonNode> asDict()
+        public JsonNode_Object AsDict()
         {
             return this;
         }
@@ -1346,6 +1380,15 @@ public class MyJson
         public int GetListCount()
         {
             throw new NotImplementedException();
+        }
+        public IJsonNode Clone()
+        {
+            var num = new JsonNode_Object();
+            foreach (var item in this)
+            {
+                num[item.Key] = item.Value.Clone();
+            }
+            return num;
         }
     }
 
